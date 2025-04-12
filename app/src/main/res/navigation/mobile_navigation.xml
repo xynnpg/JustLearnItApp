@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/mobile_navigation"
+    app:startDestination="@+id/navigation_home">
+
+    <fragment
+        android:id="@+id/navigation_home"
+        android:name="com.example.justlearnitappp.ui.home.HomeFragment"
+        android:label="Home"
+        tools:layout="@layout/fragment_home">
+        
+        <action
+            android:id="@+id/action_home_to_biology"
+            app:destination="@id/biologyFragment" />
+        <action
+            android:id="@+id/action_home_to_history"
+            app:destination="@id/historyFragment" />
+        <action
+            android:id="@+id/action_home_to_geography"
+            app:destination="@id/geographyFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/navigation_subjects"
+        android:name="com.example.justlearnitappp.ui.subjects.SubjectsFragment"
+        android:label="Subjects"
+        tools:layout="@layout/fragment_subjects" />
+
+    <fragment
+        android:id="@+id/navigation_profile"
+        android:name="com.example.justlearnitappp.ui.profile.ProfileFragment"
+        android:label="Profile"
+        tools:layout="@layout/fragment_profile" />
+        
+    <fragment
+        android:id="@+id/biologyFragment"
+        android:name="com.example.justlearnitappp.ui.subjects.BiologyFragment"
+        android:label="Biology"
+        tools:layout="@layout/activity_biology" />
+        
+    <fragment
+        android:id="@+id/historyFragment"
+        android:name="com.example.justlearnitappp.ui.subjects.HistoryFragment"
+        android:label="History"
+        tools:layout="@layout/activity_history" />
+        
+    <fragment
+        android:id="@+id/geographyFragment"
+        android:name="com.example.justlearnitappp.ui.subjects.GeographyFragment"
+        android:label="Geography"
+        tools:layout="@layout/activity_geography" />
+</navigation>
