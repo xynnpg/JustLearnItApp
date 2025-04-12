@@ -3,6 +3,7 @@ package com.example.justlearnitappp.drive;
 import android.content.Context;
 import android.util.Log;
 
+import com.example.justlearnitappp.security.CredentialsManager;
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.gson.GsonFactory;
@@ -10,6 +11,7 @@ import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.DriveScopes;
 import com.google.api.services.drive.model.FileList;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -21,19 +23,32 @@ import java.util.List;
 
 public class DriveService {
     private static final String TAG = "DriveService";
-    private static final String CREDENTIALS_FILE_NAME = "drive_credentials.json";
     private final Drive driveService;
     private final Context context;
+    private final CredentialsManager credentialsManager;
 
     public DriveService(Context context) {
         this.context = context;
-        this.driveService = initializeDriveService();
+        try {
+            this.credentialsManager = new CredentialsManager(context);
+            this.driveService = initializeDriveService();
+        } catch (Exception e) {
+            Log.e(TAG, "Error initializing DriveService", e);
+            throw new RuntimeException("Failed to initialize DriveService", e);
+        }
     }
 
     private Drive initializeDriveService() {
         try {
             Log.d(TAG, "Initializing Drive service...");
-            InputStream credentialsStream = context.getAssets().open("credentials/" + CREDENTIALS_FILE_NAME);
+            
+            String credentialsJson = credentialsManager.getCredentials();
+            if (credentialsJson == null) {
+                Log.e(TAG, "No credentials found");
+                return null;
+            }
+
+            InputStream credentialsStream = new ByteArrayInputStream(credentialsJson.getBytes());
             GoogleCredential credential = GoogleCredential.fromStream(credentialsStream)
                     .createScoped(Collections.singleton(DriveScopes.DRIVE_FILE));
 
@@ -46,7 +61,6 @@ public class DriveService {
             
             // Test the connection using a specific folder ID
             try {
-                // Use the images folder ID for testing
                 service.files().get("1osgmsHhvsUeMMtTwfd_xuD-8jYZjoZlr").execute();
                 Log.d(TAG, "Drive service initialized and connection test successful");
             } catch (IOException e) {
@@ -88,30 +102,23 @@ public class DriveService {
                 }
 
                 Log.d(TAG, "Found " + driveFiles.size() + " files in Drive folder");
-
-                for (DriveFile driveFile : driveFiles) {
+                for (DriveFile file : driveFiles) {
                     try {
-                        File localFile = new File(localDir, driveFile.getName());
-                        Log.d(TAG, "Processing file: " + driveFile.getName());
-                        
-                        if (!localFile.exists() || localFile.lastModified() < driveFile.getLastModified()) {
-                            Log.d(TAG, "Downloading file: " + driveFile.getName());
-                            downloadFile(driveFile.getId(), localFile.getAbsolutePath());
-                            localFile.setLastModified(driveFile.getLastModified());
-                            Log.d(TAG, "Successfully downloaded: " + driveFile.getName());
+                        File localFile = new File(localDir, file.getName());
+                        if (!localFile.exists() || localFile.lastModified() < file.getLastModified()) {
+                            downloadFile(file.getId(), localFile.getAbsolutePath());
+                            Log.d(TAG, "Downloaded/Updated: " + file.getName());
                         } else {
-                            Log.d(TAG, "File is up to date: " + driveFile.getName());
+                            Log.d(TAG, "Skipped (up to date): " + file.getName());
                         }
                     } catch (IOException e) {
-                        Log.e(TAG, "Error processing file: " + driveFile.getName(), e);
-                        callback.onError("Error processing file: " + driveFile.getName());
-                        return;
+                        Log.e(TAG, "Error processing file: " + file.getName(), e);
                     }
                 }
 
                 callback.onSuccess("Sync completed successfully");
             } catch (Exception e) {
-                Log.e(TAG, "Sync error", e);
+                Log.e(TAG, "Error during sync process", e);
                 callback.onError("Sync failed: " + e.getMessage());
             }
         }).start();

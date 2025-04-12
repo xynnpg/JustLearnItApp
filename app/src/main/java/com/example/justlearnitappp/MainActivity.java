@@ -125,6 +125,9 @@ public class MainActivity extends AppCompatActivity {
             Log.d(TAG, "Tests directory: " + testsDir.getAbsolutePath());
             Log.d(TAG, "Videos directory: " + videosDir.getAbsolutePath());
 
+            // Set up credentials first
+            CredentialsSetup.setupCredentials(this);
+
             // Initialize Drive service on background thread
             executor.execute(() -> {
                 try {
